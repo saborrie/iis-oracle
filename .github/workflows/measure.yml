@@ -1,0 +1,60 @@
+name: measure
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  iis:
+    name: Measure on real IIS / VBScript
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Report engine and OS versions
+        shell: powershell
+        run: |
+          $os = (cmd /c ver) -join ''
+          $vbs = (cscript //nologo probes\version.vbs) -join ''
+          "OS:     $os"
+          "Engine: $vbs"
+          "## Engine`n``````text`n$os`n$vbs`n```````n" | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+
+      - name: Enable IIS with classic ASP
+        shell: powershell
+        run: |
+          Install-WindowsFeature Web-Server, Web-ASP | Format-Table -AutoSize
+          & "$env:windir\system32\inetsrv\appcmd.exe" set config /section:asp /scriptErrorSentToBrowser:true
+          Start-Service W3SVC
+          if ((Get-Service W3SVC).Status -ne 'Running') { throw "W3SVC did not start" }
+
+      - name: Deploy probe pages
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force C:\inetpub\wwwroot\probe | Out-Null
+          Copy-Item probes\*.asp C:\inetpub\wwwroot\probe\
+
+      - name: Run cscript probes (pure VBScript)
+        shell: powershell
+        run: |
+          $md = "## cscript (pure VBScript)`n"
+          Get-ChildItem probes\*.vbs | Where-Object Name -ne 'version.vbs' | ForEach-Object {
+            "=== $($_.Name) ==="
+            $out = (cscript //nologo $_.FullName 2>&1) -join "`n"
+            $out
+            $md += "`n### $($_.Name)`n``````text`n$out`n```````n"
+          }
+          $md | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+
+      - name: Run IIS probes (classic ASP)
+        shell: powershell
+        run: |
+          $md = "## IIS classic ASP`n"
+          Get-ChildItem C:\inetpub\wwwroot\probe\*.asp | ForEach-Object {
+            "=== $($_.Name) ==="
+            $out = (curl.exe -s -w "`nHTTP %{http_code}" "http://localhost/probe/$($_.Name)") -join "`n"
+            $out
+            $md += "`n### $($_.Name)`n``````text`n$out`n```````n"
+          }
+          $md | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
