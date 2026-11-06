@@ -47,8 +47,24 @@ cases = Array( _
 	"Trim(Null)", _
 	"UCase(Null)", _
 	"Replace(Null, ""a"", ""b"")", _
+	"Replace(""aa"", Null, ""b"")", _
+	"Replace(""aa"", ""a"", Null)", _
 	"Left(Null, 1)", _
-	"Mid(Null, 1)" _
+	"Mid(Null, 1)", _
+	"Right(Null, 1)", _
+	"LCase(Null)", _
+	"LTrim(Null)", _
+	"RTrim(Null)", _
+	"InStr(Null, ""a"")", _
+	"InStr(""a"", Null)", _
+	"InStr(1, Null, ""a"")", _
+	"LenB(Null)", _
+	"StrComp(Null, ""a"")", _
+	"CLng(Null)", _
+	"CDbl(Null)", _
+	"CDate(Null)", _
+	"""a"" & Null & ""b""", _
+	"Len("""" & Null)" _
 )
 For Each c In cases
 	WScript.Echo c & "  ->  " & Describe(c)
