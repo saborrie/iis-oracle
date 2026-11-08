@@ -26,18 +26,22 @@ jobs:
         with:
           go-version-file: go.mod
 
+      # fpm's main is unix-only, so ./... does not even build on Windows
+      # (finding in its own right). Exclude it here.
       - name: go build
-        run: go build ./...
+        shell: bash
+        run: go build $(go list ./... | grep -v '/fpm$')
 
       - name: go vet
         continue-on-error: true
-        run: go vet ./...
+        shell: bash
+        run: go vet $(go list ./... | grep -v '/fpm$')
 
       - name: go test (all packages)
         continue-on-error: true
         shell: bash
         run: |
-          go test ./... -count=1 2>&1 | tee full.txt
+          go test $(go list ./... | grep -v '/fpm$') -count=1 2>&1 | tee full.txt
           echo "## go test ./... (windows-2022, ref ${{ inputs.ref || 'main' }})" >> "$GITHUB_STEP_SUMMARY"
           echo '```text' >> "$GITHUB_STEP_SUMMARY"
           grep -E "^(--- FAIL|ok|FAIL|# )" full.txt >> "$GITHUB_STEP_SUMMARY" || true
