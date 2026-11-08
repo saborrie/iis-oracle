@@ -1,0 +1,63 @@
+name: axonasp-tests
+
+# Measures the upstream AxonASP test suite's pass/fail state on Windows,
+# the platform its maintainer develops on. Companion to the IIS probes:
+# this is evidence-gathering for a CI-gate proposal, not a gate itself.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "guimaraeslucas/axonasp ref to test"
+        required: false
+        default: "main"
+
+jobs:
+  windows:
+    name: go test on windows-2022
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: guimaraeslucas/axonasp
+          ref: ${{ inputs.ref || 'main' }}
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: go build
+        run: go build ./...
+
+      - name: go vet
+        continue-on-error: true
+        run: go vet ./...
+
+      - name: go test (all packages)
+        continue-on-error: true
+        shell: bash
+        run: |
+          go test ./... -count=1 2>&1 | tee full.txt
+          echo "## go test ./... (windows-2022, ref ${{ inputs.ref || 'main' }})" >> "$GITHUB_STEP_SUMMARY"
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          grep -E "^(--- FAIL|ok|FAIL|# )" full.txt >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: go test axonvm again (flake signal)
+        continue-on-error: true
+        shell: bash
+        run: |
+          go test ./axonvm -count=1 2>&1 | tee again.txt
+          echo "## second axonvm run" >> "$GITHUB_STEP_SUMMARY"
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          grep -E "^(--- FAIL|ok|FAIL)" again.txt >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: failure detail
+        continue-on-error: true
+        shell: bash
+        run: |
+          echo "## failure detail (first 400 lines)" >> "$GITHUB_STEP_SUMMARY"
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          grep -B1 -A12 "^--- FAIL" full.txt | head -400 >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
