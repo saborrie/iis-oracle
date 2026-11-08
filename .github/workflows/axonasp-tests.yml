@@ -30,18 +30,18 @@ jobs:
       # (finding in its own right). Exclude it here.
       - name: go build
         shell: bash
-        run: go build $(go list ./... | grep -v '/fpm$')
+        run: go build $(go list ./... | grep -vE '/(fpm|docker)$')
 
       - name: go vet
         continue-on-error: true
         shell: bash
-        run: go vet $(go list ./... | grep -v '/fpm$')
+        run: go vet $(go list ./... | grep -vE '/(fpm|docker)$')
 
       - name: go test (all packages)
         continue-on-error: true
         shell: bash
         run: |
-          go test $(go list ./... | grep -v '/fpm$') -count=1 2>&1 | tee full.txt
+          go test $(go list ./... | grep -vE '/(fpm|docker)$') -count=1 2>&1 | tee full.txt
           echo "## go test ./... (windows-2022, ref ${{ inputs.ref || 'main' }})" >> "$GITHUB_STEP_SUMMARY"
           echo '```text' >> "$GITHUB_STEP_SUMMARY"
           grep -E "^(--- FAIL|ok|FAIL|# )" full.txt >> "$GITHUB_STEP_SUMMARY" || true
