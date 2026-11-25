@@ -3,6 +3,7 @@
 ' A target for the xhr-*.asp probes: waits ?wait= seconds, answers with
 ' ?status= (default 200), and echoes what it was sent. With ?utf8=1 it answers
 ' application/json (no charset) carrying UTF-8 bytes for U+00E9 and U+2019.
+' ?hold= waits that many seconds without using the CPU.
 Option Explicit
 Dim waitFor, t0, n, bytes, i, hexText
 waitFor = 0
@@ -10,6 +11,10 @@ If IsNumeric(Request.QueryString("wait")) Then waitFor = CDbl(Request.QueryStrin
 t0 = Timer
 Do While Timer - t0 < waitFor And Timer >= t0
 Loop
+If IsNumeric(Request.QueryString("hold")) Then
+	' Waits without spinning, so a waiting target takes no CPU from the caller.
+	CreateObject("WScript.Shell").Run "ping -n " & (CInt(Request.QueryString("hold")) + 1) & " 127.0.0.1", 0, True
+End If
 If Request.QueryString("status") <> "" Then Response.Status = Request.QueryString("status") & " Probe"
 If Request.QueryString("utf8") = "1" Then
 	Response.ContentType = "application/json"
