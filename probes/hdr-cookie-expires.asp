@@ -21,5 +21,4 @@ Response.Cookies("str") = "6"
 Response.Cookies("str").Expires = "January 1, 2027"
 
 Response.Write "Now() = " & Now() & vbLf
-Response.Write "readback lit = " & Response.Cookies("lit").Expires & vbLf
 %>
