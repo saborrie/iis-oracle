@@ -4,7 +4,7 @@
 ' ?status= (default 200), and echoes what it was sent. With ?utf8=1 it answers
 ' application/json (no charset) carrying UTF-8 bytes for U+00E9 and U+2019.
 Option Explicit
-Dim waitFor, t0, n, bytes, i, hex
+Dim waitFor, t0, n, bytes, i, hexText
 waitFor = 0
 If IsNumeric(Request.QueryString("wait")) Then waitFor = CDbl(Request.QueryString("wait"))
 t0 = Timer
@@ -26,10 +26,10 @@ n = Request.TotalBytes
 Response.Write "bytes=" & n & vbLf
 If n > 0 Then
 	bytes = Request.BinaryRead(n)
-	hex = ""
+	hexText = ""
 	For i = 1 To LenB(bytes)
-		hex = hex & Right("0" & UCase(Hex(AscB(MidB(bytes, i, 1)))), 2)
+		hexText = hexText & Right("0" & UCase(Hex(AscB(MidB(bytes, i, 1)))), 2)
 	Next
-	Response.Write "body-hex=" & hex & vbLf
+	Response.Write "body-hex=" & hexText & vbLf
 End If
 %>
