@@ -53,7 +53,9 @@ jobs:
           $md = "## IIS classic ASP`n"
           Get-ChildItem C:\inetpub\wwwroot\probe\*.asp | ForEach-Object {
             "=== $($_.Name) ==="
-            $out = (curl.exe -s -w "`nHTTP %{http_code}" "http://localhost/probe/$($_.Name)") -join "`n"
+            # hdr-*.asp probes measure response headers, so fetch those with -i.
+            $flags = if ($_.Name -like 'hdr-*') { '-si' } else { '-s' }
+            $out = (curl.exe $flags -w "`nHTTP %{http_code}" "http://localhost/probe/$($_.Name)") -join "`n"
             $out
             $md += "`n### $($_.Name)`n``````text`n$out`n```````n"
           }
