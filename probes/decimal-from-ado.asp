@@ -70,6 +70,8 @@ Function TypeOfArg(x)
 End Function
 
 Sub Probe(tag)
+	On Error Resume Next
+	Err.Clear
 	Response.Write "-- " & tag & vbLf
 	r = "(unset)"
 	r = VarType(v) : Report "VarType"
@@ -84,6 +86,10 @@ Sub Probe(tag)
 	r = TypeName(v * 2) : Report "TypeName(v * 2)"
 	r = TypeOfArg(v) : Report "VarType inside a function"
 	r = AsHeld(v) : Report "AsHeld"
+	r = AsHeld(rs.Fields(0).Value) : Report "AsHeld(field 0 value)"
+	r = "gross=" & v : Report """gross="" & v"
+	r = CStr(v + 0) : Report "CStr(v + 0)"
+	r = (v > 0) : Report "v > 0"
 End Sub
 
 Sub Cases(tag)
